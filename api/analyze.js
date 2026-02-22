@@ -172,6 +172,9 @@ export default async function handler(req, res) {
     );
     const qData = parseJSON(qRaw);
 
+    // Rate limit 방지: 1단계 후 3초 대기
+    await new Promise(r => setTimeout(r, 3000));
+
     // 2단계
     const iRaw = await callClaude(IB_SYS,
       `현재 날짜: ${today}\n분석 대상: ${companyName}\n현재가: ${qData.currentPrice} ${qData.currency}\n\n━━ 퀀트 분석 결과 ━━\n${JSON.stringify(qData, null, 2)}\n━━━━━━━━━━━━━━━━\n\n위 결과 기반으로 웹 검색 후 IB 분석 수행. JSON만 반환.`,
