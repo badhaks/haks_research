@@ -40,7 +40,7 @@ JSON 형식 (이것만 출력):
         },
         body: JSON.stringify({
           model: MODEL,
-          max_tokens: depth === "deep" ? 7000 : 5000,
+          max_tokens: 8000,
           system: SYSTEM,
           tools,
           messages,
@@ -74,17 +74,24 @@ JSON 형식 (이것만 출력):
     const f = finalText.indexOf("{"), l = finalText.lastIndexOf("}");
     if (f === -1) throw new Error("JSON 파싱 실패 - 응답에 JSON 없음");
     let jsonStr = finalText.slice(f, l + 1);
-    // JSON 자동 복구: 끊긴 경우 닫는 괄호 추가
     let result;
     try {
       result = JSON.parse(jsonStr);
     } catch {
-      // 열린 괄호 수만큼 닫기 시도
-      const opens = (jsonStr.match(/{/g)||[]).length;
-      const closes = (jsonStr.match(/}/g)||[]).length;
-      const diff = opens - closes;
-      if (diff > 0) jsonStr += "}".repeat(diff);
-      // trailing comma 제거
+      // 1. trailing comma 제거
+      jsonStr = jsonStr.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+      // 2. 끊긴 문자열 닫기
+      const quoteCount = (jsonStr.match(/(?<!\\)"/g) || []).length;
+      if (quoteCount % 2 !== 0) jsonStr += '"';
+      // 3. 열린 배열 닫기
+      const arrOpen = (jsonStr.match(/\[/g) || []).length;
+      const arrClose = (jsonStr.match(/\]/g) || []).length;
+      if (arrOpen > arrClose) jsonStr += "]".repeat(arrOpen - arrClose);
+      // 4. 열린 객체 닫기
+      const objOpen = (jsonStr.match(/{/g) || []).length;
+      const objClose = (jsonStr.match(/}/g) || []).length;
+      if (objOpen > objClose) jsonStr += "}".repeat(objOpen - objClose);
+      // 5. 다시 trailing comma 제거
       jsonStr = jsonStr.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
       result = JSON.parse(jsonStr);
     }
