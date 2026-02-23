@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
 
-const KV_URL   = "https://viable-malamute-49690.upstash.io";
-const KV_TOKEN = "AcIaAAIncDI4MTVhNmU0MzY2MDk0MjIxYmEwODg5M2QwNzcyMzUyOXAyNDk2OTA";
-
 const ADMIN_KEYS = ["haks-admin", "haks-owner"];
 const ADMIN_PW   = "haks2026";
 const STORAGE_STOCKS = "aos_stocks_v4";
@@ -252,17 +249,7 @@ export default function App() {
   const [pendingAction, setPendingAction] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const kvSet = async (key, value) => {
-    const res = await fetch(`${KV_URL}/set/${key}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${KV_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(value),
-    });
-    return res.json();
-  };
+
 
   useEffect(() => {
     try {
@@ -276,14 +263,24 @@ export default function App() {
     try { localStorage.setItem(STORAGE_STOCKS, JSON.stringify(data)); } catch {}
   };
 
-  const saveStockToKV = async (allStocks) => {
-    try { await kvSet("aos_stocks", allStocks); } 
-    catch (e) { console.error("KV 저장 실패:", e); }
+  const saveStockToKV = async (stock) => {
+    try {
+      await fetch("/api/stocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock }),
+      });
+    } catch (e) { console.error("KV 저장 실패:", e); }
   };
 
-  const deleteStockFromKV = async (allStocks) => {
-    try { await kvSet("aos_stocks", allStocks); }
-    catch (e) { console.error("KV 삭제 실패:", e); }
+  const deleteStockFromKV = async (id) => {
+    try {
+      await fetch("/api/stocks", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+    } catch (e) { console.error("KV 삭제 실패:", e); }
   };
 
   const requireAdmin = (action) => {
@@ -523,7 +520,7 @@ export default function App() {
         setPhase(3);
         const updated = [data, ...stocks.filter(s=>s.id!==data.id)];
         saveStocks(updated);
-        saveStockToKV(updated);  // KV에도 저장
+        saveStockToKV(data);  // KV에도 저장
         setSelected(data);
         setTimeout(() => { setDetailTab("overview"); setView("detail"); }, 500);
       } catch(e) { setError(e.message); setPhase(0); }
@@ -1044,7 +1041,7 @@ export default function App() {
               <button className="btn btn-danger btn-sm" style={{ flex:1 }} onClick={() => {
                 const newStocks = stocks.filter(s=>s.id!==selected?.id);
                 saveStocks(newStocks);
-                deleteStockFromKV(newStocks);  // KV에서도 삭제
+                deleteStockFromKV(selected?.id);  // KV에서도 삭제
                 setSelected(null); setShowDeleteConfirm(false); setView("dashboard");
               }}>삭제</button>
             </div>
