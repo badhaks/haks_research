@@ -1,21 +1,10 @@
 {
   "version": 2,
   "functions": {
-    "api/analyze-ib.js": {
-      "maxDuration": 300
-    },
-    "api/analyze-quant.js": {
-      "maxDuration": 300
-    }
+    "api/analyze-ib.js":    { "maxDuration": 300 },
+    "api/analyze-quant.js": { "maxDuration": 300 }
   },
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
