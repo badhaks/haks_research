@@ -4,7 +4,6 @@ const ADMIN_KEYS = ["haks-admin", "haks-owner"];
 const ADMIN_PW   = "haks2026";
 const STORAGE_STOCKS = "aos_stocks_v4";
 const STORAGE_KEY    = "aos_admin_key";
-const STORAGE_AKEY   = "aos_anthropic_key";
 
 const fmt = (v, cur = "USD") => {
   if (!v || isNaN(parseFloat(v))) return "—";
@@ -236,8 +235,6 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [view, setView]         = useState("dashboard");
   const [detailTab, setDetailTab] = useState("overview");
-  const [anthropicKey, setAnthropicKey] = useState("");
-  const [keyInput, setKeyInput]         = useState("");
   const [searchQ, setSearchQ]           = useState("");
   const [filterType, setFilterType]     = useState("ALL");
   const [filterVerdict, setFilterVerdict] = useState("ALL");
@@ -252,14 +249,32 @@ export default function App() {
     try {
       const s = localStorage.getItem(STORAGE_STOCKS);
       if (s) setStocks(JSON.parse(s));
-      const k = localStorage.getItem(STORAGE_AKEY);
-      if (k) { setAnthropicKey(k); setKeyInput(k); }
     } catch {}
   }, []);
 
-  const saveStocks = (data) => {
+  const saveStocks = async (data) => {
     setStocks(data);
     try { localStorage.setItem(STORAGE_STOCKS, JSON.stringify(data)); } catch {}
+  };
+
+  const saveStockToKV = async (stock) => {
+    try {
+      await fetch("/api/stocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock }),
+      });
+    } catch (e) { console.error("KV 저장 실패:", e); }
+  };
+
+  const deleteStockFromKV = async (id) => {
+    try {
+      await fetch("/api/stocks", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+    } catch (e) { console.error("KV 삭제 실패:", e); }
   };
 
   const requireAdmin = (action) => {
@@ -486,19 +501,20 @@ export default function App() {
 
     const run = async () => {
       if (!company.trim() || !mode) return;
-      if (!anthropicKey) { setError("설정에서 Anthropic API 키를 입력해주세요"); return; }
       setLoading(true); setError(""); setPhase(1);
       const endpoint = mode === "IB" ? "/api/analyze-ib" : "/api/analyze-quant";
       try {
         const r = await fetch(endpoint, {
           method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ companyName:company.trim(), anthropicKey, depth }),
+          body: JSON.stringify({ companyName: company.trim(), depth }),
         });
         setPhase(2);
         const data = await r.json();
         if (data.error) { setError(data.error); setPhase(0); setLoading(false); return; }
         setPhase(3);
-        saveStocks([data, ...stocks.filter(s=>s.id!==data.id)]);
+        const updated = [data, ...stocks.filter(s=>s.id!==data.id)];
+        saveStocks(updated);
+        saveStockToKV(data);  // KV에도 저장
         setSelected(data);
         setTimeout(() => { setDetailTab("overview"); setView("detail"); }, 500);
       } catch(e) { setError(e.message); setPhase(0); }
@@ -948,18 +964,7 @@ export default function App() {
         <button className="btn btn-ghost btn-sm" onClick={() => setView("dashboard")}>← 뒤로</button>
       </div>
       <div style={{ maxWidth:480 }}>
-        <div style={{ background:"var(--card)", border:"1px solid var(--border)", borderRadius:12, padding:22, marginBottom:14 }}>
-          <div style={{ fontSize:8, color:"var(--muted)", letterSpacing:2.5, fontFamily:"var(--mono)", marginBottom:14 }}>ANTHROPIC API KEY</div>
-          <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>IB 분석 + 퀀트 분석 모두에 사용됩니다</div>
-          <div style={{ display:"flex", gap:8 }}>
-            <input className="inp" type="password" placeholder="sk-ant-..." value={keyInput} onChange={e=>setKeyInput(e.target.value)} />
-            <button className="btn btn-primary btn-sm" onClick={() => {
-              setAnthropicKey(keyInput);
-              try { localStorage.setItem(STORAGE_AKEY, keyInput); } catch {}
-            }}>저장</button>
-          </div>
-          {anthropicKey && <div style={{ fontSize:9, color:"var(--green)", fontFamily:"var(--mono)", marginTop:8 }}>✓ 키 등록됨</div>}
-        </div>
+
         <div style={{ background:"var(--card)", border:"1px solid var(--border)", borderRadius:12, padding:22, marginBottom:14 }}>
           <div style={{ fontSize:8, color:"var(--muted)", letterSpacing:2.5, fontFamily:"var(--mono)", marginBottom:14 }}>데이터 관리</div>
           <div style={{ display:"flex", gap:8 }}>
@@ -1028,7 +1033,9 @@ export default function App() {
             <div style={{ display:"flex", gap:8 }}>
               <button className="btn btn-ghost btn-sm" style={{ flex:1 }} onClick={() => setShowDeleteConfirm(false)}>취소</button>
               <button className="btn btn-danger btn-sm" style={{ flex:1 }} onClick={() => {
-                saveStocks(stocks.filter(s=>s.id!==selected?.id));
+                const newStocks = stocks.filter(s=>s.id!==selected?.id);
+                saveStocks(newStocks);
+                deleteStockFromKV(selected?.id);  // KV에서도 삭제
                 setSelected(null); setShowDeleteConfirm(false); setView("dashboard");
               }}>삭제</button>
             </div>
