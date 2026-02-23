@@ -6,9 +6,6 @@
     },
     "api/analyze-quant.js": {
       "maxDuration": 300
-    },
-    "api/stocks.js": {
-      "maxDuration": 10
     }
   },
   "rewrites": [
