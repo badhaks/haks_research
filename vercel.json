@@ -5,7 +5,8 @@
     "api/analyze-quant.js": { "maxDuration": 300 },
     "api/stocks.js":        { "maxDuration": 10  }
   },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)",     "dest": "/index.html" }
   ]
 }
