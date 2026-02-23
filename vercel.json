@@ -3,5 +3,8 @@
   "functions": {
     "api/analyze-ib.js":    { "maxDuration": 300 },
     "api/analyze-quant.js": { "maxDuration": 300 }
-  }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
