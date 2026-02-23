@@ -6,6 +6,9 @@
     "api/stocks.js":        { "maxDuration": 10  }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/:path*",              "destination": "/api/:path*" },
+    { "source": "/static/:path*",           "destination": "/static/:path*" },
+    { "source": "/:file(.*\\..*)",          "destination": "/:file" },
+    { "source": "/(.*)",                    "destination": "/index.html" }
   ]
 }
