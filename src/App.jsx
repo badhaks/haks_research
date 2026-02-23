@@ -253,11 +253,15 @@ export default function App() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const kvSet = async (key, value) => {
-    // Upstash REST: /set/key/value 형식으로 전송
-    const encoded = encodeURIComponent(JSON.stringify(value));
-    await fetch(`${KV_URL}/set/${key}/${encoded}`, {
-      headers: { Authorization: `Bearer ${KV_TOKEN}` },
+    const res = await fetch(`${KV_URL}/set/${key}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${KV_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(value),
     });
+    return res.json();
   };
 
   useEffect(() => {
