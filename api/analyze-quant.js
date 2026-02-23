@@ -3,7 +3,7 @@ export default async function handler(req, res) {
   const { companyName, anthropicKey, depth = "deep" } = req.body;
   if (!companyName || !anthropicKey) return res.status(400).json({ error: "필수 파라미터 없음" });
 
-  const MODEL = "claude-opus-4-6";
+  const MODEL = "claude-sonnet-4-6";
   const today = new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
   const tools = [{ name: "web_search", type: "web_search_20250305" }];
 
@@ -153,7 +153,7 @@ export default async function handler(req, res) {
       if (data.stop_reason === "tool_use") {
         const uses = (data.content || []).filter(b => b.type === "tool_use");
         messages.push({ role: "assistant", content: data.content });
-        messages.push({ role: "user", content: uses.map(tu => ({ type: "tool_result", tool_use_id: tu.id, content: (tu.content || []).map(c => typeof c === "string" ? c.slice(0, 2000) : JSON.stringify(c).slice(0, 2000)).join("\n") })) });
+        messages.push({ role: "user", content: uses.map(tu => ({ type: "tool_result", tool_use_id: tu.id, content: (tu.content || []).map(c => typeof c === "string" ? c.slice(0, 800) : JSON.stringify(c).slice(0, 800)).join("\n") })) });
       } else break;
     }
     const f = finalText.indexOf("{"), l = finalText.lastIndexOf("}");
