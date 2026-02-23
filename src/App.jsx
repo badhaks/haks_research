@@ -71,7 +71,8 @@ const CSS = `
   --green:#10b981;--red:#ef4444;--blue:#3b82f6;--purple:#8b5cf6;
   --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;--serif:'Playfair Display',serif;
 }
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;}
+html{overflow-x:hidden;}
 input,button,select{font-family:var(--font);}button{cursor:pointer;}
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
@@ -216,13 +217,16 @@ input,button,select{font-family:var(--font);}button{cursor:pointer;}
 
 .mob-nav{display:none;}
 @media(max-width:768px){
-  .sidebar{display:none;}
-  .main{margin-left:0;padding:16px;padding-bottom:72px;}
-  .stats-row{grid-template-columns:1fr 1fr;}
-  .stock-grid{grid-template-columns:1fr;}
-  .grid2,.grid3,.grid4{grid-template-columns:1fr 1fr;}
-  .mode-grid{grid-template-columns:1fr;}
-  .mob-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:100;}
+  .sidebar{display:none !important;}
+  .layout{display:block;}
+  .main{margin-left:0 !important;padding:16px !important;padding-bottom:80px !important;width:100% !important;max-width:100% !important;min-height:100vh;}
+  .stats-row{grid-template-columns:1fr 1fr !important;}
+  .stock-grid{grid-template-columns:1fr !important;}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr 1fr !important;}
+  .mode-grid{grid-template-columns:1fr !important;}
+  .topbar{flex-direction:column;gap:10px;}
+  .tabs{overflow-x:auto;}
+  .mob-nav{display:flex !important;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:200;}
   .mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0;font-size:8px;letter-spacing:1px;color:var(--muted);font-family:var(--mono);gap:3px;cursor:pointer;}
   .mob-tab.active{color:var(--accent);}
   .mob-tab-icon{font-size:19px;}
@@ -245,6 +249,26 @@ export default function App() {
   const [pendingAction, setPendingAction] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Upstash REST API 직접 호출
+  const KV_URL   = "https://viable-malamute-49690.upstash.io";
+  const KV_TOKEN = "AcIaAAIncDI4MTVhNmU0MzY2MDk0MjIxYmEwODg5M2QwNzcyMzUyOXAyNDk2OTA";
+
+  const kvGet = async (key) => {
+    const r = await fetch(`${KV_URL}/get/${key}`, {
+      headers: { Authorization: `Bearer ${KV_TOKEN}` }
+    });
+    const d = await r.json();
+    return d.result ? JSON.parse(d.result) : null;
+  };
+
+  const kvSet = async (key, value) => {
+    await fetch(`${KV_URL}/set/${key}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${KV_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify(value),
+    });
+  };
+
   useEffect(() => {
     try {
       const s = localStorage.getItem(STORAGE_STOCKS);
@@ -257,24 +281,14 @@ export default function App() {
     try { localStorage.setItem(STORAGE_STOCKS, JSON.stringify(data)); } catch {}
   };
 
-  const saveStockToKV = async (stock) => {
-    try {
-      await fetch("/api/stocks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stock }),
-      });
-    } catch (e) { console.error("KV 저장 실패:", e); }
+  const saveStockToKV = async (allStocks) => {
+    try { await kvSet("aos_stocks", allStocks); } 
+    catch (e) { console.error("KV 저장 실패:", e); }
   };
 
-  const deleteStockFromKV = async (id) => {
-    try {
-      await fetch("/api/stocks", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-    } catch (e) { console.error("KV 삭제 실패:", e); }
+  const deleteStockFromKV = async (allStocks) => {
+    try { await kvSet("aos_stocks", allStocks); }
+    catch (e) { console.error("KV 삭제 실패:", e); }
   };
 
   const requireAdmin = (action) => {
@@ -514,7 +528,7 @@ export default function App() {
         setPhase(3);
         const updated = [data, ...stocks.filter(s=>s.id!==data.id)];
         saveStocks(updated);
-        saveStockToKV(data);  // KV에도 저장
+        saveStockToKV(updated);  // KV에도 저장
         setSelected(data);
         setTimeout(() => { setDetailTab("overview"); setView("detail"); }, 500);
       } catch(e) { setError(e.message); setPhase(0); }
@@ -1035,7 +1049,7 @@ export default function App() {
               <button className="btn btn-danger btn-sm" style={{ flex:1 }} onClick={() => {
                 const newStocks = stocks.filter(s=>s.id!==selected?.id);
                 saveStocks(newStocks);
-                deleteStockFromKV(selected?.id);  // KV에서도 삭제
+                deleteStockFromKV(newStocks);  // KV에서도 삭제
                 setSelected(null); setShowDeleteConfirm(false); setView("dashboard");
               }}>삭제</button>
             </div>
