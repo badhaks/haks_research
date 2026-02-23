@@ -2,7 +2,8 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
   const { companyName, depth = "deep" } = req.body;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (!companyName || !anthropicKey) return res.status(400).json({ error: "필수 파라미터 없음" });
+  if (!companyName) return res.status(400).json({ error: "companyName 없음" });
+  if (!anthropicKey) return res.status(400).json({ error: "ANTHROPIC_API_KEY 환경변수 미설정 — Vercel에서 확인하세요" });
 
   const MODEL = "claude-sonnet-4-6";
   const today = new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
