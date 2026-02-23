@@ -265,7 +265,7 @@ export default function App() {
 
   const saveStockToKV = async (stock) => {
     try {
-      await fetch("/api/stocks", {
+      await fetch("https://haks-research.vercel.app/api/stocks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stock }),
@@ -275,7 +275,7 @@ export default function App() {
 
   const deleteStockFromKV = async (id) => {
     try {
-      await fetch("/api/stocks", {
+      await fetch("https://haks-research.vercel.app/api/stocks", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
@@ -508,7 +508,7 @@ export default function App() {
     const run = async () => {
       if (!company.trim() || !mode) return;
       setLoading(true); setError(""); setPhase(1);
-      const endpoint = mode === "IB" ? "/api/analyze-ib" : "/api/analyze-quant";
+      const endpoint = mode === "IB" ? "https://haks-research.vercel.app/api/analyze-ib" : "https://haks-research.vercel.app/api/analyze-quant";
       try {
         const r = await fetch(endpoint, {
           method:"POST", headers:{"Content-Type":"application/json"},
