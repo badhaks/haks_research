@@ -107,7 +107,7 @@ input,button,select{font-family:var(--font);}button{cursor:pointer;}
 .inp:focus{border-color:var(--accent);}
 .inp::placeholder{color:var(--muted);}
 
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px;}
 .stat-top{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
 .stat-top-n{font-family:var(--mono);font-size:28px;font-weight:700;}
 .stat-top-l{font-size:9px;color:var(--muted);letter-spacing:1.5px;font-family:var(--mono);margin-top:4px;}
@@ -400,7 +400,7 @@ export default function App() {
     const ibCount    = stocks.filter(s=>s.analysisType==="IB").length;
     const quantCount = stocks.filter(s=>s.analysisType==="QUANT").length;
     const buyCount   = stocks.filter(s=>["STRONG BUY","BUY","Strong Buy","Buy"].includes(getVerdict(s))).length;
-    const avgUp      = stocks.length ? (stocks.reduce((a,s)=>a+(parseFloat(s.upsideDownside)||0),0)/stocks.length).toFixed(1) : null;
+    const avgUpVal   = stocks.length ? (stocks.reduce((a,s)=>a+(parseFloat(s.upsideDownside)||0),0)/stocks.length).toFixed(1) : null;
 
     return (
       <div className="fade-in">
@@ -424,6 +424,7 @@ export default function App() {
             { l:"IB", v:ibCount, c:"var(--blue)" },
             { l:"QUANT", v:quantCount, c:"var(--purple)" },
             { l:"BUY 신호", v:buyCount, c:"var(--green)" },
+            { l:"AVG UPSIDE", v:avgUpVal!==null?pct(avgUpVal):"—", c:(parseFloat(avgUpVal)||0)>0?"var(--green)":"var(--red)" },
           ].map(s => (
             <div key={s.l} className="stat-top">
               <div className="stat-top-n" style={{ color:s.c }}>{s.v}</div>
