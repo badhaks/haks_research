@@ -1,9 +1,11 @@
 {
-  "buildCommand": "react-scripts build",
-  "outputDirectory": "build",
+  "version": 2,
   "functions": {
     "api/analyze-ib.js":    { "maxDuration": 300 },
     "api/analyze-quant.js": { "maxDuration": 300 },
     "api/stocks.js":        { "maxDuration": 10  }
-  }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
