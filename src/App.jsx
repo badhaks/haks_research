@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 
+const KV_URL   = "https://viable-malamute-49690.upstash.io";
+const KV_TOKEN = "AcIaAAIncDI4MTVhNmU0MzY2MDk0MjIxYmEwODg5M2QwNzcyMzUyOXAyNDk2OTA";
+
 const ADMIN_KEYS = ["haks-admin", "haks-owner"];
 const ADMIN_PW   = "haks2026";
 const STORAGE_STOCKS = "aos_stocks_v4";
@@ -248,10 +251,6 @@ export default function App() {
   const [pwError, setPwError]   = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // Upstash REST API 직접 호출
-  const KV_URL   = "https://viable-malamute-49690.upstash.io";
-  const KV_TOKEN = "AcIaAAIncDI4MTVhNmU0MzY2MDk0MjIxYmEwODg5M2QwNzcyMzUyOXAyNDk2OTA";
 
   const kvSet = async (key, value) => {
     await fetch(`${KV_URL}/set/${key}`, {
