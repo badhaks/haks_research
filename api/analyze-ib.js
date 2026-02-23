@@ -1,6 +1,7 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
-  const { companyName, anthropicKey, depth = "deep" } = req.body;
+  const { companyName, depth = "deep" } = req.body;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (!companyName || !anthropicKey) return res.status(400).json({ error: "필수 파라미터 없음" });
 
   const MODEL = "claude-sonnet-4-6";
@@ -38,7 +39,7 @@ JSON 형식 (이것만 출력):
         },
         body: JSON.stringify({
           model: MODEL,
-          max_tokens: depth === "deep" ? 6000 : 4000,
+          max_tokens: depth === "deep" ? 7000 : 5000,
           system: SYSTEM,
           tools,
           messages,
@@ -70,8 +71,22 @@ JSON 형식 (이것만 출력):
     }
 
     const f = finalText.indexOf("{"), l = finalText.lastIndexOf("}");
-    if (f === -1) throw new Error("JSON 파싱 실패");
-    const result = JSON.parse(finalText.slice(f, l + 1));
+    if (f === -1) throw new Error("JSON 파싱 실패 - 응답에 JSON 없음");
+    let jsonStr = finalText.slice(f, l + 1);
+    // JSON 자동 복구: 끊긴 경우 닫는 괄호 추가
+    let result;
+    try {
+      result = JSON.parse(jsonStr);
+    } catch {
+      // 열린 괄호 수만큼 닫기 시도
+      const opens = (jsonStr.match(/{/g)||[]).length;
+      const closes = (jsonStr.match(/}/g)||[]).length;
+      const diff = opens - closes;
+      if (diff > 0) jsonStr += "}".repeat(diff);
+      // trailing comma 제거
+      jsonStr = jsonStr.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+      result = JSON.parse(jsonStr);
+    }
     return res.status(200).json({ ...result, analyzedAt: new Date().toISOString(), depth, id: Date.now().toString(), analysisType: "IB" });
   } catch (e) {
     return res.status(500).json({ error: e.message });
