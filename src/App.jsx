@@ -253,14 +253,6 @@ export default function App() {
   const KV_URL   = "https://viable-malamute-49690.upstash.io";
   const KV_TOKEN = "AcIaAAIncDI4MTVhNmU0MzY2MDk0MjIxYmEwODg5M2QwNzcyMzUyOXAyNDk2OTA";
 
-  const kvGet = async (key) => {
-    const r = await fetch(`${KV_URL}/get/${key}`, {
-      headers: { Authorization: `Bearer ${KV_TOKEN}` }
-    });
-    const d = await r.json();
-    return d.result ? JSON.parse(d.result) : null;
-  };
-
   const kvSet = async (key, value) => {
     await fetch(`${KV_URL}/set/${key}`, {
       method: "POST",
